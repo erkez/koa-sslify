@@ -31,5 +31,8 @@
   "license": "MIT",
   "engines": {
     "node": ">5.0.0"
+  },
+  "dependencies": {
+    "range_check": "^1.4.0"
   }
 }

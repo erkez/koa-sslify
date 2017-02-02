@@ -1,4 +1,5 @@
 var url = require('url');
+var rangeCheck = require('range_check');
 
 /**
  * Default configuration
@@ -10,6 +11,7 @@ const defaults = {
   hostname: null,
   skipDefaultPort: true,
   ignoreUrl: false,
+  ignoreInternalIps: false,
   temporary: false,
   redirectMethods: ['GET', 'HEAD'],
   internalRedirectMethods: [],
@@ -33,6 +35,10 @@ function applyOptions(options) {
 
 function portToUrlString(options) {
   return (options.skipDefaultPort && options.port === 443) ? '' : ':' + options.port;
+}
+
+function isLocalIp(ip) {
+  return rangeCheck.inRange(ip, ['10.0.0.0/8', '192.0.0.0/8', '127.0.0.1']);
 }
 
 /**
@@ -68,6 +74,7 @@ module.exports = function enforceHTTPS(options) {
 
     // First, check if directly requested via https
     var secure = ctx.secure;
+    var skipLocalAddress = options.ignoreInternalIps && isLocalIp(ctx.ip);
 
     // Second, if the request headers can be trusted (e.g. because they are send
     // by a proxy), check if x-forward-proto is set to https
@@ -81,7 +88,7 @@ module.exports = function enforceHTTPS(options) {
       secure = true;
     }
 
-    if (secure) {
+    if (secure || skipLocalAddress) {
       return next();
     }
 
